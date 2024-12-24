@@ -1,0 +1,10 @@
+.context-menu{
+    z-index: 101;
+    position: absolute;
+    background-color: white;
+}
+
+.context-menu > div{
+    cursor: pointer;
+    border: solid 1px black;
+}

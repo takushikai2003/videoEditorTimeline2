@@ -1,0 +1,14 @@
+.track-row{
+    display: grid;
+    grid-template-columns: 120px auto;
+}
+
+.track-header{
+    grid-column: 1 / 2;
+    font-weight: bold;
+    background-color: darkgray;
+}
+
+.track-canvas{
+    grid-column: 2 / 3;
+}
