@@ -1,5 +1,7 @@
 "use strict";
 
+// let contextMenu;
+
 export class ContextMenu {
     /**
      * @typedef {Object} MenuItem
@@ -9,33 +11,57 @@ export class ContextMenu {
 
     /**
      * @param {MenuItem[]} items
-     * @param {number} x
-     * @param {number} y
+     * @param {number} x -絶対座標
+     * @param {number} y -絶対座標
      */
     constructor(items, x, y) {
-        const menu = document.createElement('div');
-        menu.classList.add('context-menu');
-        menu.tabIndex = -1; // フォーカス可能にする
+        // const menu = document.createElement('div');
+        // menu.classList.add('context-menu');
+        // // menu.tabIndex = -1; // フォーカス可能にする
 
-        for(const item of items){
-            const div = document.createElement("div");
-            div.textContent = item.label;
+        // for(const item of items){
+        //     const div = document.createElement("div");
+        //     div.textContent = item.label;
 
-            div.addEventListener("click",()=>{
-                item.action();
-            });
+        //     div.addEventListener("click",()=>{
+        //         item.action();
+        //     });
 
-            menu.appendChild(div);
-        }
+        //     menu.appendChild(div);
+        // }
 
-        menu.style.top = y + "px";
-        menu.style.left = x + "px";
+        // menu.style.top = y + "px";
+        // menu.style.left = x + "px";
         
-        document.body.appendChild(menu);
-        menu.focus();
+        // document.body.appendChild(menu);
+        // menu.focus();
 
-        menu.addEventListener("blur",()=>{
-            menu.remove();
+        // menu.addEventListener("blur",()=>{
+        //     menu.remove();
+        // });
+
+
+        // e.preventDefault();
+
+        // メニュー生成
+        const contextMenu = document.createElement("menu");
+        contextMenu.className = "context-menu surface right no-wrap active";
+        contextMenu.style.top = 0//x + "px";
+        contextMenu.style.left = 0//y + "px";
+        contextMenu.tabIndex = -1;  // フォーカス可能にする
+
+        contextMenu.innerHTML = `
+            <li onclick="alert('削除')">削除</li>
+            <li onclick="alert('分割')">分割</li>
+        `;
+
+        document.body.appendChild(contextMenu);
+
+        // フォーカスが外れたら自動削除
+        contextMenu.focus();
+        contextMenu.addEventListener("blur", () => {
+            // contextMenu.remove();
+            // contextMenu = null;
         });
     }
 }
