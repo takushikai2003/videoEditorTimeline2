@@ -1,0 +1,9 @@
+#timeline_scrollar_header{
+    grid-row: 3/4;
+    grid-column: 1/2;
+}
+
+#timeline_scrollbar{
+    grid-row: 3/4;
+    grid-column: 2/3;
+}
