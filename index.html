@@ -1,112 +1,31 @@
-<!doctype html>
-<html lang="ja">
-<head>
+<!DOCTYPE html>
 <meta charset="utf-8">
-<title>BeerCSS コンテキストメニュー（位置調整済み）</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/beercss@3/dist/cdn/beer.min.css">
-<script src="https://cdn.jsdelivr.net/npm/beercss@3/dist/cdn/beer.min.js"></script>
-<style>
-  /* 固定座標で置く */
-  menu.context {
-    position: fixed;
-    z-index: 10000;
-    min-width: 120px;
-  }
-</style>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- BeerCSSの読み込み -->
+    <!-- <link href="https://cdn.jsdelivr.net/npm/beercss@3.12.7/dist/cdn/beer.min.css" rel="stylesheet">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@latest/dist/cdn/beer.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script> -->
+
 </head>
-<body style="height:100vh; margin:0;">
-  <div style="height:100%; display:flex; align-items:center; justify-content:center; border:1px dashed #888;">
-    ここを右クリックしてください（ページ全体で動作）
-  </div>
 
-<script>
-let contextMenu = null;
+<body>
+    <div id="timeline_parent">
+      <div id="timeline_ruler_header"></div>
+      <div id="timeline_ruler"></div>
 
-function closeMenu() {
-  if (!contextMenu) return;
-  document.removeEventListener('pointerdown', onPointerDownOutside);
-  window.removeEventListener('keydown', onKeyDown);
-  window.removeEventListener('resize', closeMenu);
-  contextMenu.remove();
-  contextMenu = null;
-}
+      <div id="timeline_tracks_header"></div>
+      <div id="timeline_tracks"></div>
 
-function onPointerDownOutside(e) {
-  // メニューの外をクリックしたら閉じる
-  if (!contextMenu) return;
-  if (!contextMenu.contains(e.target)) closeMenu();
-}
+      <div id="timeline_scrollbar_header"></div>
+      <div id="timeline_scrollbar"></div>
+    </div>
+    <input type="range" id="magnification" min="0.1" max="10" step="0.1" value="1" >
 
-function onKeyDown(e) {
-  if (e.key === 'Escape') closeMenu();
-}
 
-window.addEventListener('contextmenu', e => {
-  e.preventDefault();
+    <link rel="stylesheet" href="./timelineStyle.css">
 
-  // 既存があれば閉じる
-  closeMenu();
-
-  // menuを作成（注意: 'right' クラスは位置調整と競合するため加えない）
-  contextMenu = document.createElement('menu');
-  contextMenu.className = 'context surface no-wrap active'; // active で表示
-  contextMenu.tabIndex = -1; // フォーカス可能にする
-
-  // 一旦画面内に追加してサイズを測るために非表示で置く
-  contextMenu.style.left = '0px';
-  contextMenu.style.top  = '0px';
-  contextMenu.style.visibility = 'hidden';
-
-  contextMenu.innerHTML = `
-    <li data-action="delete">削除</li>
-    <li data-action="split">分割</li>
-  `;
-
-  document.body.appendChild(contextMenu);
-
-  // 要素のサイズを測定
-  const rect = contextMenu.getBoundingClientRect();
-  const margin = 8; // 端にくっつかない余白
-  let x = e.clientX;
-  let y = e.clientY;
-
-  // 右端にはみ出すなら左にずらす
-  if (x + rect.width + margin > window.innerWidth) {
-    x = Math.max(margin, window.innerWidth - rect.width - margin);
-  }
-  // 下端にはみ出すなら上にずらす
-  if (y + rect.height + margin > window.innerHeight) {
-    y = Math.max(margin, window.innerHeight - rect.height - margin);
-  }
-
-  // 最終配置
-  contextMenu.style.left = x + 'px';
-  contextMenu.style.top  = y + 'px';
-  contextMenu.style.visibility = '';
-
-  // フォーカスを与えてキーボード閉じ等を有効化
-  setTimeout(() => contextMenu && contextMenu.focus(), 0);
-
-  // 外クリック、Esc、リサイズで閉じる
-  document.addEventListener('pointerdown', onPointerDownOutside);
-  window.addEventListener('keydown', onKeyDown);
-  window.addEventListener('resize', closeMenu);
-
-  // メニュー内クリック処理（※クリック後に閉じる）
-  contextMenu.addEventListener('click', evt => {
-    const li = evt.target.closest('li');
-    if (!li) return;
-    const action = li.dataset.action;
-    if (action === 'delete') {
-      console.log('削除 action');
-      // 実際の削除処理をここに書く
-    } else if (action === 'split') {
-      console.log('分割 action');
-      // 実際の分割処理をここに書く
-    }
-    closeMenu();
-  });
-});
-</script>
+    <link rel="stylesheet" href="./test_style.css">
+    <script src="./test_main.js" type="module"></script>
 </body>
-</html>

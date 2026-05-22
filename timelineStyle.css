@@ -1,4 +1,13 @@
-@import url("./css/timeScale.css");
-@import url("./css/track.css");
+/* タイムライン全体のGridを設定 */
+/* TODO:それぞれの要素の高さを変えたければこれらを再設定する必要あり */
+#timeline_parent{
+    width: 100%;
+    display: grid;
+    grid-template-rows: 25px 150px 20px;/*ruler, tracks, scrollbar*/
+    grid-template-columns: 120px auto;/*header,,*/
+}
+
+@import url("./css/ruler.css");
+@import url("./css/tracks.css");
 @import url("./css/playhead.css");
 @import url("./css/contextmenu.css");
