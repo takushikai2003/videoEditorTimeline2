@@ -1,6 +1,6 @@
 // クリップの基本クラス
 export class Clip {
-    constructor({ id, name, startTime, duration, color }) {
+    constructor({ name, startTime, duration, color }) {
         this.name = name; // 表示名
         this.startTime = startTime;
         this.endTime = startTime + duration;
@@ -25,6 +25,9 @@ export class VideoClip extends Clip {
         this.mediaId = data.mediaId;
         this.relativeStartTime = data.relativeStartTime || 0;
         this.gain = data.gain || 1;
+
+        // デフォルト色の設定
+        this.color = data.color || "#4a90e2";
     }
 
     getInternalData() {
@@ -44,6 +47,9 @@ export class AudioClip extends Clip {
         this.mediaId = data.mediaId;
         this.relativeStartTime = data.relativeStartTime || 0;
         this.gain = data.gain || 1;
+
+        // デフォルト色の設定
+        this.color = data.color || "#2ecc71";
     }
 
     getInternalData() {
@@ -62,6 +68,9 @@ export class EffectClip extends Clip {
         super(data);
         this.effectId = data.effectId;
         this.effectParams = data.effectParams; // エフェクトの内部パラメータ（文字の色など）
+
+        // デフォルト色の設定
+        this.color = data.color || "#e6bd1a";
     }
 
     getInternalData() {
@@ -69,6 +78,26 @@ export class EffectClip extends Clip {
             ...super.getInternalData(),
             effectId: this.effectId,
             effectParams: this.effectParams,
+        };
+    }
+}
+
+// 仮
+// キーフレーム用（トラックはEffectと同じになる？）
+export class KeyframeEffectClip extends Clip {
+    constructor(data) {
+        super(data);
+
+        this.keyframes = data.keyframes;
+
+        // デフォルト色の設定
+        this.color = data.color || "#9b59b6";
+    }
+
+    getInternalData() {
+        return {
+            ...super.getInternalData(),
+            keyframes: this.keyframes,
         };
     }
 }

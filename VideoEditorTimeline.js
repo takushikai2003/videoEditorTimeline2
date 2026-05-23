@@ -1,9 +1,10 @@
 "use strict";
 
 import { Ruler } from './views/Ruler.js';
-// import { Playhead } from './Playhead.js';
+import { Playhead } from './views/Playhead.js';
 // import { TrackHeader } from './TrackHeader.js';
-// import { TimelineTrack } from './TimelineTrack.js';
+import { TimelineTracks } from './views/TimelineTracks.js';
+import { Scrollbar } from './views/Scrollbar.js';
 
 
 export class VideoEditorTimeline extends EventTarget{
@@ -38,10 +39,14 @@ export class VideoEditorTimeline extends EventTarget{
         // 各Viewコンポーネント（Canvas/SVG）の初期化
         // 各クラスには this (Timeline本体) を渡し参照可能にする
         this.ruler = new Ruler(this, this.containers.ruler);
-        this.ruler.refresh()
         this.timelineTracks = new TimelineTracks(this, this.containers.tracks);
-        this.scrollbar = new TimelineScrollbar(this, this.containers.scrollbar);
+        this.scrollbar = new Scrollbar(this, this.containers.scrollbar);
         this.playhead = new Playhead(this); // SVG要素として実装
+
+        this.ruler.refresh();
+        this.timelineTracks.render();
+
+
 
         this.dispatchEvent(new CustomEvent("init")); // 初期化完了通知
 

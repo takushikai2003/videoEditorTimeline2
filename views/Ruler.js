@@ -27,7 +27,7 @@ export class Ruler {
 
     ctx.clearRect(0, 0, width, height);
     
-    ctx.fillStyle = "gray";
+    ctx.fillStyle = "#f8f9fa";
     ctx.fillRect(0, 0, width, height);
 
     // 1. 適切なステップ（秒）を取得
@@ -36,7 +36,7 @@ export class Ruler {
     // 2. 左端のオフセットから「何番目の目盛りか」を整数で計算
     const startStepIndex = Math.floor(offset / stepSeconds);
 
-    ctx.strokeStyle = "black";
+    ctx.strokeStyle = "#555555";
     ctx.fillStyle = "black";
     ctx.font = "13px sans-serif";
     
@@ -49,7 +49,6 @@ export class Ruler {
         // 時間を座標に変換
         const x = this.timeline.timeToPx(t);
 
-        console.log(x)
 
         // 画面右端を超えたらループ終了
         if (x > width) break;
