@@ -30,6 +30,13 @@ const testEffectClip = new EffectClip({
     duration: 5.5,            // 5.5秒間の長さ
 });
 
+const testEffectClip2 = new EffectClip({
+    effectId: "effect_01", // 素材ライブラリのID
+    name: "テストエフェクト",
+    startTime: 15.0,           // 2秒地点から配置
+    duration: 3,            // 5.5秒間の長さ
+});
+
 const testKeyframeEffectClip = new KeyframeEffectClip({
     effectId: "keyframe_effect_01", // 素材ライブラリのID
     name: "テストキーフレーム（仮）",
@@ -41,6 +48,7 @@ const testKeyframeEffectClip = new KeyframeEffectClip({
 timeline.tracks.video.push(testVideoClip);
 timeline.tracks.audio.push(testAudioClip);
 timeline.tracks.effect.push(testEffectClip);
+timeline.tracks.effect.push(testEffectClip2);
 timeline.tracks.effect.push(testKeyframeEffectClip);
 
 timeline.update();
