@@ -5,7 +5,7 @@ import { Playhead } from './views/Playhead.js';
 // import { TrackHeader } from './TrackHeader.js';
 import { TimelineTracks } from './views/TimelineTracks.js';
 import { Scrollbar } from './views/Scrollbar.js';
-
+import { InteractionManager } from './controllers/InteractionManager.js';
 
 export class VideoEditorTimeline extends EventTarget{
     /**
@@ -45,8 +45,10 @@ export class VideoEditorTimeline extends EventTarget{
 
         this.ruler.refresh();
         this.timelineTracks.render();
+        this.scrollbar.refresh(this.getTotalDuration());
 
-
+        // controllerの初期化
+        this.interactionManager = new InteractionManager(this);
 
         this.dispatchEvent(new CustomEvent("init")); // 初期化完了通知
 
@@ -75,6 +77,23 @@ export class VideoEditorTimeline extends EventTarget{
         };
     }
 
+    // タイムライン全体の長さを取得する
+    getTotalDuration() {
+        let maxEndTime = 0;
+        const trackTypes = ["video", "audio", "effect"];
+
+        trackTypes.forEach(type => {
+            this.tracks[type].forEach(clip => {
+                if (clip.endTime > maxEndTime) {
+                    maxEndTime = clip.endTime;
+                }
+            });
+        });
+        
+        // クリップが何もない場合や、末尾に少し余裕を持たせたい場合は調整
+        return Math.max(maxEndTime, 10); // 最低10秒分は表示するなど
+    }
+
     /**
      * 内部データが変更された際に呼び出し、Viewの再描画と上位への通知を行う
      */
@@ -82,7 +101,7 @@ export class VideoEditorTimeline extends EventTarget{
         // 全Viewの再描画を実行
         this.ruler.refresh();
         this.timelineTracks.render();
-        this.scrollbar.update();
+        this.scrollbar.refresh(this.getTotalDuration());
 
         // 上位プロジェクトに通知
         this.dispatchEvent(new CustomEvent("update", {detail:{state: this.getState()}}));
