@@ -31,13 +31,21 @@ export class ScrollbarInteractionHandler {
         if (!this.isScrolling) return;
 
         const deltaX = e.clientX - this.initialState.mouseX;
-        const deltaScroll = (deltaX / this.initialState.width) * this.initialState.totalDuration;
         
-        // scrollOffsetの更新（0〜最大値の範囲にクランプ）
+        // ScrollbarからpaddingDurationを取得
+        const padding = this.timeline.scrollbar.paddingDuration || 0;
+        const displayDuration = this.initialState.totalDuration + padding;
+
+        // 比率計算： (ピクセル移動量 / バーの幅) * 表示上の全時間
+        const deltaScroll = (deltaX / this.initialState.width) * displayDuration;
+        
+        let nextOffset = this.initialState.scrollOffset + deltaScroll;
+
+        // --- 最大スクロール値の制限（クランプ） ---
         const visibleDuration = this.initialState.width / this.timeline.magnification;
-        const maxOffset = Math.max(0, this.initialState.totalDuration - visibleDuration);
+        const maxOffset = Math.max(0, displayDuration - visibleDuration);
         
-        this.timeline.scrollOffset = Math.max(0, Math.min(this.initialState.scrollOffset + deltaScroll, maxOffset));
+        this.timeline.scrollOffset = Math.max(0, Math.min(nextOffset, maxOffset));
         this.timeline.update();
     }
 

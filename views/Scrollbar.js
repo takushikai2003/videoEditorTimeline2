@@ -6,6 +6,8 @@ export class Scrollbar {
         this.container.appendChild(this.canvas);
         this.ctx = this.canvas.getContext("2d");
 
+        this.paddingDuration = 5;// クリップの末尾から5秒の余白を追加する
+
         this.resize();
     }
 
@@ -22,33 +24,35 @@ export class Scrollbar {
         const { width, height } = this.canvas;
         const ctx = this.ctx;
         
-        // 1. 背景のクリア（ライトグレー）
+        // 1. 背景のクリア
         ctx.fillStyle = "#f8f9fa";
         ctx.fillRect(0, 0, width, height);
 
-        if(!totalDuration){
+        if (totalDuration === undefined) {
             console.error("refresh() needs totalDuration");
+            return;
         }
 
-        if (totalDuration <= 0) return;
+        // --- 余白（パディング）の設定 ---
+        const displayDuration = totalDuration + this.paddingDuration;
 
-        // 2. ミニマップ（クリップの簡易表示）
-        // 全体の長さを canvas の幅にマッピングして、クリップの位置を描画
-        // ごちゃごちゃするので使わない
-        // this.drawMinimap(totalDuration);
+        if (displayDuration <= 0) return;
 
         // 3. スクロールバーの「つまみ（Thumb）」の計算
+        // 画面内に表示されている時間の長さ（秒）
         const visibleDuration = width / this.timeline.magnification;
-        const thumbWidth = Math.max(20, (visibleDuration / totalDuration) * width);
-        const thumbX = (this.timeline.scrollOffset / totalDuration) * width;
+
+        // つまみの幅： (画面に見えている時間 / 表示上の全時間) * キャンバス幅
+        const thumbWidth = Math.max(20, Math.min(width, (visibleDuration / displayDuration) * width));
+
+        // つまみの位置： (現在のスクロール位置 / 表示上の全時間) * キャンバス幅
+        const thumbX = (this.timeline.scrollOffset / displayDuration) * width;
 
         // 4. つまみの描画
-        // ライトテーマに合わせ、少し透明度のある青系 (#4a90e2)
-        ctx.fillStyle = "#cccccc";      // つまみの塗り
-        ctx.strokeStyle = "#aaaaaa";    // つまみの枠線        ctx.strokeStyle = "#45515e";
+        ctx.fillStyle = "#cccccc";
+        ctx.strokeStyle = "#aaaaaa";
         ctx.lineWidth = 1;
         
-        // 角丸の矩形を描画（お好みで）
         this.drawRoundedRect(ctx, thumbX, 2, thumbWidth, height - 4, 4);
     }
 
