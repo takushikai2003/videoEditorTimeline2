@@ -1,6 +1,14 @@
 // クリップの基本クラス
 export class Clip {
     constructor({ name, startTime, duration, color }) {
+        // --- 基本引数のバリデーション ---
+        const requiredFields = ['name', 'startTime', 'duration'];
+        for (const field of requiredFields) {
+            if (arguments[0][field] === undefined) {
+                throw new Error(`Clipの初期化に失敗しました: 必須引数 "${field}" が足りません。`);
+            }
+        }
+
         this.name = name; // 表示名
         this.startTime = startTime;
         this.endTime = startTime + duration;
@@ -22,7 +30,17 @@ export class Clip {
 export class VideoClip extends Clip {
     constructor(data) {
         super(data);
+
+        // --- 基本引数のバリデーション ---
+        const requiredFields = ['mediaId', 'mediaDuration', 'relativeStartTime'];
+        for (const field of requiredFields) {
+            if (arguments[0][field] === undefined) {
+                throw new Error(`Clipの初期化に失敗しました: 必須引数 "${field}" が足りません。`);
+            }
+        }
+
         this.mediaId = data.mediaId;
+        this.mediaDuration = data.mediaDuration;
         this.relativeStartTime = data.relativeStartTime || 0;
         this.gain = data.gain || 1;
 
@@ -34,6 +52,7 @@ export class VideoClip extends Clip {
         return {
             ...super.getInternalData(),
             mediaId: this.mediaId,
+            mediaDuration: this.mediaDuration,
             relativeStartTime: this.relativeStartTime,
             gain: this.gain
         };
@@ -44,7 +63,17 @@ export class VideoClip extends Clip {
 export class AudioClip extends Clip {
     constructor(data) {
         super(data);
+
+        // --- 基本引数のバリデーション ---
+        const requiredFields = ['mediaId', 'mediaDuration', 'relativeStartTime'];
+        for (const field of requiredFields) {
+            if (arguments[0][field] === undefined) {
+                throw new Error(`Clipの初期化に失敗しました: 必須引数 "${field}" が足りません。`);
+            }
+        }
+
         this.mediaId = data.mediaId;
+        this.mediaDuration = data.mediaDuration;
         this.relativeStartTime = data.relativeStartTime || 0;
         this.gain = data.gain || 1;
 
@@ -56,6 +85,7 @@ export class AudioClip extends Clip {
         return {
             ...super.getInternalData(),
             mediaId: this.mediaId,
+            mediaDuration: this.mediaDuration,
             relativeStartTime: this.relativeStartTime,
             gain: this.gain
         };
@@ -66,6 +96,15 @@ export class AudioClip extends Clip {
 export class EffectClip extends Clip {
     constructor(data) {
         super(data);
+
+        // --- 基本引数のバリデーション ---
+        const requiredFields = ['effectId'];
+        for (const field of requiredFields) {
+            if (arguments[0][field] === undefined) {
+                throw new Error(`Clipの初期化に失敗しました: 必須引数 "${field}" が足りません。`);
+            }
+        }
+
         this.effectId = data.effectId;
         this.effectParams = data.effectParams; // エフェクトの内部パラメータ（文字の色など）
 
