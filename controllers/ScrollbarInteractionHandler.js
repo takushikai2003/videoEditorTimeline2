@@ -11,10 +11,17 @@ export class ScrollbarInteractionHandler {
         const totalDuration = this.timeline.getTotalDuration();
         const width = rect.width;
 
-        // つまみの位置を計算してヒットテスト
+        // --- 修正ポイント1: paddingDurationを取得し、表示上の全時間を算出 ---
+        const padding = this.timeline.scrollbar.paddingDuration || 0;
+        const displayDuration = totalDuration + padding;
+
+        if (displayDuration <= 0) return;
+
+        // --- 修正ポイント2: 全ての計算に displayDuration を使用する ---
         const visibleDuration = width / this.timeline.magnification;
-        const thumbWidth = Math.max(20, (visibleDuration / totalDuration) * width);
-        const thumbX = (this.timeline.scrollOffset / totalDuration) * width;
+        const thumbWidth = Math.max(20, Math.min(width, (visibleDuration / displayDuration) * width));
+        const thumbX = (this.timeline.scrollOffset / displayDuration) * width;
+
 
         if (x >= thumbX && x <= thumbX + thumbWidth) {
             this.isScrolling = true;
