@@ -64,3 +64,11 @@ mag_slider.addEventListener("input",()=>{
     timeline.magnification = Number(mag_slider.value);
     timeline.update();
 });
+
+
+// timeline.currentTimeを更新することでplayheadを動かせる
+// let num = 0;
+// setInterval(() => {
+//     timeline.currentTime = num;
+//     num +=0.01;
+// }, 10);

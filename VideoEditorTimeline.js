@@ -8,6 +8,9 @@ import { Scrollbar } from './views/Scrollbar.js';
 import { InteractionManager } from './controllers/InteractionManager.js';
 
 export class VideoEditorTimeline extends EventTarget{
+    // プライベートフィールドの定義
+    #currentTime = 0; // プレイヘッドの現在時間
+
     /**
      * @param {HTMLElement} parentElement
      */
@@ -19,13 +22,13 @@ export class VideoEditorTimeline extends EventTarget{
         this.containers = {
             ruler: this.parent.querySelector("#timeline_ruler"),
             tracks: this.parent.querySelector("#timeline_tracks"),
-            scrollbar: this.parent.querySelector("#timeline_scrollbar")
+            scrollbar: this.parent.querySelector("#timeline_scrollbar"),
+            playhead: this.parent.querySelector("#timeline_playhead_container"),
         };
 
         // 状態の初期化
         this.magnification = 60; // 1秒 = 60px
         this.scrollOffset = 0;
-        this.currentTime = 0;
         this.trackHeight = 50; // 高さ50px TODO:高さ変更機能
 
         // データモデル (Model) の初期化
@@ -41,17 +44,34 @@ export class VideoEditorTimeline extends EventTarget{
         this.ruler = new Ruler(this, this.containers.ruler);
         this.timelineTracks = new TimelineTracks(this, this.containers.tracks);
         this.scrollbar = new Scrollbar(this, this.containers.scrollbar);
-        this.playhead = new Playhead(this); // SVG要素として実装
+        this.playhead = new Playhead(this, this.containers.playhead); // SVG要素として実装
 
         this.ruler.refresh();
         this.timelineTracks.render();
         this.scrollbar.refresh(this.getTotalDuration());
+        this.playhead.refresh(this.currentTime);
 
         // controllerの初期化
         this.interactionManager = new InteractionManager(this);
 
         this.dispatchEvent(new CustomEvent("init")); // 初期化完了通知
 
+    }
+
+    /**
+     * 現在の再生時刻の取得（エンジンから直接参照）
+     */
+    get currentTime() {
+        return this.#currentTime;
+    }
+
+    /**
+     * 現在の再生時刻の設定（外部からのシーク用）
+     * この setter がエンジン更新と UI 再描画の起点となる
+     */
+    set currentTime(time) {
+        this.#currentTime = Math.max(0, time);
+        this.playhead.refresh(this.#currentTime);
     }
 
     timeToPx(time) {
@@ -102,6 +122,7 @@ export class VideoEditorTimeline extends EventTarget{
         this.ruler.refresh();
         this.timelineTracks.render();
         this.scrollbar.refresh(this.getTotalDuration());
+        this.playhead.refresh(this.currentTime);
 
         // 上位プロジェクトに通知
         this.dispatchEvent(new CustomEvent("update", {detail:{state: this.getState()}}));
