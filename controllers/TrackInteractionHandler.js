@@ -1,6 +1,7 @@
 export class TrackInteractionHandler {
     constructor(timeline) {
         this.timeline = timeline;
+        this.canvas = timeline.timelineTracks.canvas;
         this.activeAction = null; // 'move', 'resize-start', 'resize-end' など
         this.targetClip = null;
         this.initialState = null; // 操作開始時のクリップのStartTimeなどを保持
@@ -23,7 +24,7 @@ export class TrackInteractionHandler {
         const type = trackTypes[trackIndex];
 
         if (!type || !this.timeline.tracks[type]){
-            console.error("track not found");
+            // console.error("track not found");
             return null;
         }
 
@@ -46,7 +47,7 @@ export class TrackInteractionHandler {
     }
 
     handleMouseDown(e) {
-        const rect = this.timeline.timelineTracks.canvas.getBoundingClientRect();
+        const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
@@ -71,10 +72,29 @@ export class TrackInteractionHandler {
 
 
     handleMouseMove(e) {
-        if (!this.activeAction || !this.targetClip) return;
-
-        const rect = this.timeline.timelineTracks.canvas.getBoundingClientRect();
+        const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (!this.activeAction || !this.targetClip){
+            // --- ホバー中（非ドラッグ時）のカーソル判定 ---
+            const hit = this.findClipAt(x, y);
+            if (hit) {
+                // ヒットテストを行い、端か中央かを判定
+                const action = this.findActionAt(x, y, hit.clip, hit.type);
+                
+                if (action === 'resize-start' || action === 'resize-end') {
+                    this.canvas.style.cursor = 'ew-resize'; // 左右リサイズ
+                } else {
+                    this.canvas.style.cursor = 'grab'; // 移動可能
+                }
+            } else {
+                this.canvas.style.cursor = 'default'; // 何もない場所
+            }
+            return;
+        }
+
+
         const deltaTime = (x - this.initialState.mouseX) / this.timeline.magnification;
 
         const isVideoOrAudio = this.targetTrackType === 'video' || this.targetTrackType === 'audio';
@@ -82,29 +102,11 @@ export class TrackInteractionHandler {
         // --- 衝突判定の適用 ---
         let nextStartTime = this.initialState.startTime + deltaTime;
         let nextEndTime = this.initialState.endTime + deltaTime;
-        const obstacle = this.checkCollision(nextStartTime, nextEndTime);
-
-        if (obstacle) {
-            if (this.activeAction === 'move') {
-                // 移動中の場合、進行方向の隣のクリップの端で止める
-                if (nextStartTime > this.initialState.startTime) { // 右移動
-                    nextStartTime = obstacle.startTime - (this.initialState.endTime - this.initialState.startTime);
-                    nextEndTime = obstacle.startTime;
-                } else { // 左移動
-                    nextStartTime = obstacle.endTime;
-                    nextEndTime = obstacle.endTime + (this.initialState.endTime - this.initialState.startTime);
-                }
-            } else if (this.activeAction === 'resize-end') {
-                // 右端リサイズなら相手の開始地点で止める
-                nextEndTime = obstacle.startTime;
-            } else if (this.activeAction === 'resize-start') {
-                // 左端リサイズなら相手の終了地点で止める
-                nextStartTime = obstacle.endTime;
-            }
-        }
+        // const obstacle = this.checkCollision(nextStartTime, nextEndTime);
 
 
         if (this.activeAction === 'move') {
+            this.canvas.style.cursor = 'grabbing';
             // let nextStartTime = this.initialState.startTime + deltaTime;
             // let nextEndTime = this.initialState.endTime + deltaTime;
 
@@ -119,6 +121,8 @@ export class TrackInteractionHandler {
             this.targetClip.endTime = nextEndTime;
         } 
         else if (this.activeAction === 'resize-start') {
+            this.canvas.style.cursor = 'ew-resize';
+
             let newStartTime = this.initialState.startTime + deltaTime;
             
             if (isVideoOrAudio) {
@@ -133,8 +137,10 @@ export class TrackInteractionHandler {
             // startTimeがendTimeを超えないように制約
             this.targetClip.startTime = Math.min(newStartTime, this.targetClip.endTime - 0.1);
         } 
+        // --- 右端リサイズ ---
         else if (this.activeAction === 'resize-end') {
-            // --- 右端リサイズ ---
+            this.canvas.style.cursor = 'ew-resize';
+
             let newEndTime = this.initialState.endTime + deltaTime;
 
             if (isVideoOrAudio) {
