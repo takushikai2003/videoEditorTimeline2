@@ -48,12 +48,17 @@ export class VideoClip extends Clip {
         this.color = data.color || "#4a90e2";
     }
 
+    get relativeEndTime() {
+        return this.relativeStartTime + (this.endTime - this.startTime);
+    }
+
     getInternalData() {
         return {
             ...super.getInternalData(),
             mediaId: this.mediaId,
             mediaDuration: this.mediaDuration,
             relativeStartTime: this.relativeStartTime,
+            relativeEndTime: this.relativeEndTime,
             gain: this.gain
         };
     }
@@ -81,12 +86,17 @@ export class AudioClip extends Clip {
         this.color = data.color || "#2ecc71";
     }
 
+    get relativeEndTime() {
+        return this.relativeStartTime + (this.endTime - this.startTime);
+    }
+
     getInternalData() {
         return {
             ...super.getInternalData(),
             mediaId: this.mediaId,
             mediaDuration: this.mediaDuration,
             relativeStartTime: this.relativeStartTime,
+            relativeEndTime: this.relativeEndTime,
             gain: this.gain
         };
     }

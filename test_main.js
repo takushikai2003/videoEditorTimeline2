@@ -7,7 +7,7 @@ const timeline = new VideoEditorTimeline(timelineParent);
 // テスト用クリップの作成
 const testVideoClip = new VideoClip({
     mediaId: "video_asset_01", // 素材ライブラリのID
-    mediaDuration: 3.5,
+    mediaDuration: 8.0,
     name: "テストビデオ",
     startTime: 2.0,           // 2秒地点から配置
     relativeStartTime: 0,
@@ -16,7 +16,7 @@ const testVideoClip = new VideoClip({
 
 const testAudioClip = new AudioClip({
     mediaId: "audio_asset_01", // 素材ライブラリのID
-    mediaDuration: 3.5,
+    mediaDuration: 8.0,
     name: "テストオーディオ",
     startTime: 2.0,           // 2秒地点から配置
     relativeStartTime: 0,
