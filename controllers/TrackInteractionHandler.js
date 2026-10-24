@@ -64,7 +64,10 @@ export class TrackInteractionHandler {
                 endTime: this.targetClip.endTime,
                 // Video/Audioの場合は相対時間も保持
                 relativeStartTime: this.targetClip.relativeStartTime || 0,
-                mouseX: x
+                mouseX: x,
+                trackClips: this.timeline.tracks[hit.type].map(clip => ({
+                    clip, startTime: clip.startTime, endTime: clip.endTime
+                })).sort((a, b) => a.startTime - b.startTime)
             };
         }
     }
@@ -98,26 +101,9 @@ export class TrackInteractionHandler {
 
         const isVideoOrAudio = this.targetTrackType === 'video' || this.targetTrackType === 'audio';
 
-        // --- 衝突判定の適用 ---
-        let nextStartTime = this.initialState.startTime + deltaTime;
-        let nextEndTime = this.initialState.endTime + deltaTime;
-        // const obstacle = this.checkCollision(nextStartTime, nextEndTime);
-
-
         if (this.activeAction === 'move') {
             this.canvas.style.cursor = 'grabbing';
-            // let nextStartTime = this.initialState.startTime + deltaTime;
-            // let nextEndTime = this.initialState.endTime + deltaTime;
-
-            // 0秒以下にならないように制限
-            if (nextStartTime < 0) {
-                nextEndTime -= nextStartTime;
-                nextStartTime = 0;
-            }
-
-            // モデルの更新
-            this.targetClip.startTime = nextStartTime;
-            this.targetClip.endTime = nextEndTime;
+            this.processMove(deltaTime);
         }
         else if (this.activeAction === 'resize-start' || this.activeAction === 'resize-end') {
             this.canvas.style.cursor = 'ew-resize';
@@ -143,61 +129,76 @@ export class TrackInteractionHandler {
     }
 
 
-    /**
-     * 移動処理：衝突検知と入れ替え（スワップ）ロジック
-     */
-    processMove(deltaTime, trackClips) {
-        let nextStartTime = this.initialState.startTime + deltaTime;
-        const duration = this.initialState.endTime - this.initialState.startTime;
+    // Neighbors are chosen from the original interval, so fast drags cannot
+    // jump over a clip. Track array order does not affect the result.
+    getResizeBounds() {
+        let left = 0;
+        let right = Infinity;
+        const { startTime, endTime } = this.initialState;
+        for (const clip of this.timeline.tracks[this.targetTrackType]) {
+            if (clip === this.targetClip) continue;
+            if (clip.endTime <= startTime) left = Math.max(left, clip.endTime);
+            if (clip.startTime >= endTime) right = Math.min(right, clip.startTime);
+        }
+        return { left, right };
+    }
 
-        // 0秒以下にならない制限
-        if (nextStartTime < 0) nextStartTime = 0;
-        let nextEndTime = nextStartTime + duration;
-
-        // 仮の状態で衝突判定用オブジェクトを作成
-        const ghost = { startTime: nextStartTime, endTime: nextEndTime };
-
-        // 衝突している相手を探す
-        const obstacle = trackClips.find(other =>
-            other !== this.targetClip && this.isCollision(ghost, other)
-        );
-
-        if (obstacle) {
-            const draggedMid = nextStartTime + (duration / 2);
-            const obstacleDuration = obstacle.endTime - obstacle.startTime;
-            const obstacleMid = obstacle.startTime + (obstacleDuration / 2);
-
-            // 中心点を超えたら入れ替え（スワップ）を実行
-            if (nextStartTime > this.initialState.startTime) { // 右移動中
-                if (draggedMid > obstacleMid) {
-                    obstacle.startTime = nextStartTime - obstacleDuration;
-                    obstacle.endTime = nextStartTime;
-                } else {
-                    nextStartTime = obstacle.startTime - duration;
-                    nextEndTime = obstacle.startTime;
-                }
-            } else { // 左移動中
-                if (draggedMid < obstacleMid) {
-                    obstacle.startTime = nextEndTime;
-                    obstacle.endTime = nextEndTime + obstacleDuration;
-                } else {
-                    nextStartTime = obstacle.endTime;
-                    nextEndTime = obstacle.endTime + duration;
-                }
+    processMove(deltaTime) {
+        const { startTime, endTime, trackClips } = this.initialState;
+        const duration = endTime - startTime;
+        const desiredCenter = startTime + duration / 2 + deltaTime;
+        // Rebuild from the drag origin to avoid cumulative shifts and allow reversal.
+        for (const state of trackClips) {
+            state.clip.startTime = state.startTime;
+            state.clip.endTime = state.endTime;
+        }
+        const ordered = trackClips.map(state => state.clip);
+        let index = ordered.indexOf(this.targetClip);
+        if (deltaTime > 0) {
+            while (index + 1 < ordered.length) {
+                const next = ordered[index + 1];
+                if (desiredCenter <= (next.startTime + next.endTime) / 2) break;
+                const nextDuration = next.endTime - next.startTime;
+                const outerStart = this.targetClip.startTime;
+                const outerEnd = next.endTime;
+                next.startTime = outerStart;
+                next.endTime = outerStart + nextDuration;
+                this.targetClip.startTime = outerEnd - duration;
+                this.targetClip.endTime = outerEnd;
+                [ordered[index], ordered[index + 1]] = [next, this.targetClip];
+                index++;
+            }
+        } else {
+            while (index > 0) {
+                const previous = ordered[index - 1];
+                if (desiredCenter >= (previous.startTime + previous.endTime) / 2) break;
+                const previousDuration = previous.endTime - previous.startTime;
+                const outerStart = previous.startTime;
+                const outerEnd = this.targetClip.endTime;
+                this.targetClip.startTime = outerStart;
+                this.targetClip.endTime = outerStart + duration;
+                previous.startTime = outerEnd - previousDuration;
+                previous.endTime = outerEnd;
+                [ordered[index - 1], ordered[index]] = [this.targetClip, previous];
+                index--;
             }
         }
-
-        this.targetClip.startTime = nextStartTime;
-        this.targetClip.endTime = nextEndTime;
+        // Keep the dragged clip inside its new neighbors, preserving its duration.
+        const left = index > 0 ? ordered[index - 1].endTime : 0;
+        const right = index + 1 < ordered.length ? ordered[index + 1].startTime : Infinity;
+        const nextStart = Math.max(left, Math.min(startTime + deltaTime, right - duration));
+        this.targetClip.startTime = nextStart;
+        this.targetClip.endTime = nextStart + duration;
     }
 
     // Clamp one delta so timeline and source positions stay in sync.
     processResize(deltaTime, isVideoOrAudio) {
         const { startTime, endTime, relativeStartTime } = this.initialState;
         const minDuration = Math.min(0.1, endTime - startTime);
+        const { left, right } = this.getResizeBounds();
 
         if (this.activeAction === 'resize-start') {
-            let minDelta = -startTime;
+            let minDelta = left - startTime;
             if (isVideoOrAudio) {
                 minDelta = Math.max(minDelta, -relativeStartTime);
             }
@@ -210,9 +211,9 @@ export class TrackInteractionHandler {
         } else if (this.activeAction === 'resize-end') {
             const minDelta = startTime + minDuration - endTime;
             const relativeEndTime = relativeStartTime + endTime - startTime;
-            const maxDelta = isVideoOrAudio
+            const maxDelta = Math.min(right - endTime, isVideoOrAudio
                 ? this.targetClip.mediaDuration - relativeEndTime
-                : Infinity;
+                : Infinity);
             const appliedDelta = Math.max(minDelta, Math.min(deltaTime, maxDelta));
             this.targetClip.endTime = endTime + appliedDelta;
         }
